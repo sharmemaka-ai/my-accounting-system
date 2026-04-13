@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سیستەمی دارایی - وەشانی ٢٢</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;900&display=swap');
+        body { font-family: 'Vazirmatn', sans-serif; background-color: #f1f5f9; color: #1e293b; }
+        .tab-active { background: #4f46e5; color: white; box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4); }
+        .income-row { border-right: 4px solid #10b981; }
+        .expense-row { border-right: 4px solid #f43f5e; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    </style>
+</head>
+<body class="p-2 md:p-6">
+
+    <div class="max-w-[1400px] mx-auto">
+        <!-- Header -->
+        <header class="flex flex-wrap justify-between items-center mb-8 bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-200">
+            <div class="flex items-center gap-5">
+                <div class="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
+                    <i class="fas fa-database text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black text-slate-800 tracking-tight text-right">بەڕێوەبردنی دارایی</h1>
+                    <p class="text-[10px] font-bold text-slate-400 text-right uppercase tracking-widest">Backup & Restore System v22.0</p>
+                </div>
+            </div>
+            <nav class="flex bg-slate-100 p-1.5 rounded-2xl gap-1">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="px-6 py-2.5 rounded-xl text-sm font-black tab-active transition-all">سەرەکی</button>
+                <button onclick="switchTab('reports')" id="nav-reports" class="px-6 py-2.5 rounded-xl text-sm font-black text-slate-500 hover:bg-slate-200 transition-all">ڕاپۆرتەکان</button>
+                <button onclick="switchTab('settings')" id="nav-settings" class="px-6 py-2.5 rounded-xl text-sm font-black text-slate-500 hover:bg-slate-200 transition-all">ڕێکخستن</button>
+            </nav>
+        </header>
+
+        <!-- Dashboard -->
+        <div id="view-dashboard" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+                <div class="bg-slate-900 p-7 rounded-[2rem] text-white shadow-xl relative overflow-hidden">
+                    <p class="text-xs font-bold opacity-60 mb-1">ڕەسیدی سندوق</p>
+                    <h2 id="dash-cash" class="text-3xl font-black italic">0 $</h2>
+                    <i class="fas fa-wallet absolute -bottom-4 -right-4 text-8xl opacity-10"></i>
+                </div>
+                <div class="bg-white p-7 rounded-[2rem] border border-slate-200 shadow-sm border-r-4 border-r-rose-500">
+                    <p class="text-xs font-bold text-slate-400 mb-1">کۆی قەرز</p>
+                    <h3 id="dash-debt" class="text-3xl font-black text-rose-500 italic">0 $</h3>
+                </div>
+                <div class="bg-white p-7 rounded-[2rem] border border-slate-200 shadow-sm border-r-4 border-r-emerald-500">
+                    <p class="text-xs font-bold text-slate-400 mb-1">کۆی داهات</p>
+                    <h3 id="dash-in" class="text-3xl font-black text-emerald-600 italic">0 $</h3>
+                </div>
+                <div class="bg-white p-7 rounded-[2rem] border border-slate-200 shadow-sm border-r-4 border-r-amber-500">
+                    <p class="text-xs font-bold text-slate-400 mb-1">کۆی خەرجی</p>
+                    <h3 id="dash-out" class="text-3xl font-black text-amber-600 italic">0 $</h3>
+                </div>
+            </div>
+
+            <div class="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-5">
+                    <div class="space-y-1.5 text-right">
+                        <label class="text-[11px] font-black text-slate-500 px-1">ناوی لایەن</label>
+                        <input type="text" id="f-name" list="cust-list" class="w-full p-3.5 bg-slate-50 rounded-2xl font-bold text-sm outline-none focus:ring-2 ring-indigo-100" placeholder="ناو...">
+                    </div>
+                    <div class="space-y-1.5 text-right">
+                        <label class="text-[11px] font-black text-slate-500 px-1">جۆری مامەڵە</label>
+                        <select id="f-purpose" class="w-full p-3.5 bg-slate-50 rounded-2xl font-bold text-sm outline-none"></select>
+                    </div>
+                    <div class="space-y-1.5 text-right">
+                        <label class="text-[11px] font-black text-slate-500 px-1">کۆی وەسڵ</label>
+                        <input type="number" id="f-total" class="w-full p-3.5 bg-slate-50 rounded-2xl font-bold text-sm outline-none" placeholder="0.00">
+                    </div>
+                    <div class="space-y-1.5 text-right">
+                        <label class="text-[11px] font-black text-indigo-600 px-1">بڕی دراو (کاش)</label>
+                        <input type="number" id="f-cash" class="w-full p-3.5 bg-indigo-50 border border-indigo-100 rounded-2xl font-bold text-sm text-indigo-700 outline-none" placeholder="0.00">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-5 items-end">
+                    <div class="md:col-span-2 space-y-1.5 text-right">
+                        <label class="text-[11px] font-black text-slate-500 px-1">تێبینی</label>
+                        <input type="text" id="f-note" class="w-full p-3.5 bg-slate-50 rounded-2xl font-bold text-sm outline-none" placeholder="ووردەکاری...">
+                    </div>
+                    <div class="space-y-1.5 text-right">
+                        <label class="text-[11px] font-black text-slate-500 px-1">دراو</label>
+                        <select id="f-curr" class="w-full p-3.5 bg-slate-50 rounded-2xl font-black text-sm outline-none">
+                            <option value="USD">دۆلار ($)</option>
+                            <option value="IQD">دینار (IQD)</option>
+                        </select>
+                    </div>
+                    <button onclick="saveTransaction()" class="py-4 bg-indigo-600 text-white rounded-2xl font-black text-sm hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">تۆمارکردن</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports -->
+        <div id="view-reports" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm flex flex-wrap gap-4 items-end">
+                <div class="flex-1 min-w-[200px] space-y-1.5 text-right">
+                    <label class="text-[11px] font-black text-slate-500 px-1">گەڕان</label>
+                    <input type="text" id="search-input" oninput="renderTable()" placeholder="بگەڕێ بۆ ناو یان تێبینی..." class="w-full p-3 bg-slate-50 rounded-xl font-bold text-sm outline-none">
+                </div>
+                <div class="space-y-1.5 text-right">
+                    <label class="text-[11px] font-black text-slate-500 px-1">لە بەرواری</label>
+                    <input type="date" id="filter-start" onchange="renderTable()" class="p-3 bg-slate-50 rounded-xl font-bold text-sm outline-none">
+                </div>
+                <div class="space-y-1.5 text-right">
+                    <label class="text-[11px] font-black text-slate-500 px-1">بۆ بەرواری</label>
+                    <input type="date" id="filter-end" onchange="renderTable()" class="p-3 bg-slate-50 rounded-xl font-bold text-sm outline-none">
+                </div>
+                <button onclick="exportToExcel()" class="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl font-black text-sm hover:bg-emerald-700 shadow-lg shadow-emerald-100">
+                    <i class="fas fa-file-excel"></i> هەناردە (Excel)
+                </button>
+            </div>
+
+            <div class="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden">
+                <table class="w-full text-right" id="main-table">
+                    <thead class="bg-slate-50 text-slate-400 border-b">
+                        <tr>
+                            <th class="p-5 text-[10px] font-black">بەروار</th>
+                            <th class="p-5 text-[10px] font-black">جۆر</th>
+                            <th class="p-5 text-[10px] font-black">لایەن / تێبینی</th>
+                            <th class="p-5 text-[10px] font-black text-center">وەسڵ</th>
+                            <th class="p-5 text-[10px] font-black text-center text-indigo-600">کاش</th>
+                            <th class="p-5 text-[10px] font-black text-center text-rose-500">قەرز</th>
+                            <th class="p-5 text-[10px] font-black text-center bg-slate-100 text-slate-900 italic">ڕەسید</th>
+                            <th class="p-5 text-[10px] font-black text-center">کردار</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body" class="divide-y divide-slate-50"></tbody>
+                </table>
+                <div id="empty-state" class="hidden p-20 text-center text-slate-300">
+                    <i class="fas fa-folder-open text-6xl mb-4"></i>
+                    <p class="font-black italic">هیچ زانیارییەک لێرە نییە</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings -->
+        <div id="view-settings" class="hidden space-y-8">
+            <!-- Data Backup & Restore -->
+            <div class="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm border-t-8 border-t-amber-400">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-black text-slate-800">پاراستنی داتا (Backup & Restore)</h3>
+                    <i class="fas fa-cloud-arrow-up text-amber-500 text-2xl"></i>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="p-6 bg-slate-50 rounded-[2rem] border border-dashed border-slate-300">
+                        <p class="text-sm font-black text-slate-600 mb-4 italic">١. هەناردەکردنی هەموو داتاکان بۆ ناو فایلێک (Backup)</p>
+                        <button onclick="exportData()" class="w-full py-4 bg-slate-800 text-white rounded-2xl font-black text-sm hover:bg-black transition-all flex items-center justify-center gap-3">
+                            <i class="fas fa-download"></i> هەناردەکردن (Export JSON)
+                        </button>
+                    </div>
+                    <div class="p-6 bg-slate-50 rounded-[2rem] border border-dashed border-slate-300">
+                        <p class="text-sm font-black text-slate-600 mb-4 italic">٢. هێنانەوەی داتا لە فایلەوە (Restore)</p>
+                        <input type="file" id="import-file" class="hidden" accept=".json" onchange="importData(event)">
+                        <button onclick="document.getElementById('import-file').click()" class="w-full py-4 bg-indigo-500 text-white rounded-2xl font-black text-sm hover:bg-indigo-600 transition-all flex items-center justify-center gap-3">
+                            <i class="fas fa-upload"></i> هێنانەوەی فایل (Import JSON)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white p-8 rounded-[2.5rem] border border-slate-200">
+                    <h3 class="text-lg font-black text-slate-800 mb-6 italic">جۆرەکانی مامەڵە</h3>
+                    <div class="flex gap-3 mb-6 p-4 bg-slate-50 rounded-2xl">
+                        <input type="text" id="new-purp-name" placeholder="ناو..." class="flex-1 p-3 bg-white border rounded-xl font-bold text-sm outline-none">
+                        <select id="new-purp-type" class="p-3 bg-white border rounded-xl font-bold text-sm outline-none">
+                            <option value="in">داهات (+)</option>
+                            <option value="out">خەرجی (-)</option>
+                        </select>
+                        <button onclick="addPurpose()" class="px-6 bg-emerald-500 text-white rounded-xl font-black text-xs">زیادکردن</button>
+                    </div>
+                    <div id="purposes-list" class="space-y-3"></div>
+                </div>
+                <div class="bg-white p-8 rounded-[2.5rem] border border-slate-200">
+                    <h3 class="text-lg font-black text-slate-800 mb-4 italic text-right">نرخی گۆڕینەوەی دۆلار</h3>
+                    <input type="number" id="exchange-rate" onchange="updateRate()" class="w-full p-6 rounded-2xl font-black text-4xl text-center border-2 border-indigo-100 text-indigo-700 outline-none">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <datalist id="cust-list"></datalist>
+
+    <script>
+        // State Management
+        const state = {
+            transactions: JSON.parse(localStorage.getItem('ledger_v22_data')) || [],
+            purposes: JSON.parse(localStorage.getItem('ledger_v22_purposes')) || [
+                {id: 1, name: 'کڕین', type: 'out'},
+                {id: 2, name: 'فرۆشتن', type: 'in'}
+            ],
+            rate: JSON.parse(localStorage.getItem('ledger_v22_rate')) || 150000
+        };
+
+        let currentFiltered = [];
+
+        function sync() {
+            localStorage.setItem('ledger_v22_data', JSON.stringify(state.transactions));
+            localStorage.setItem('ledger_v22_purposes', JSON.stringify(state.purposes));
+            localStorage.setItem('ledger_v22_rate', JSON.stringify(state.rate));
+            renderAll();
+        }
+
+        // BACKUP & RESTORE LOGIC
+        function exportData() {
+            const dataStr = JSON.stringify(state, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            const exportFileDefaultName = `Financial_Backup_${new Date().toISOString().split('T')[0]}.json`;
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (imported.transactions && imported.purposes && imported.rate) {
+                        if (confirm('ئایا دڵنیای لە هێنانەوەی ئەم داتایە؟ هەموو داتاکانی ئێستات لادەچێت و ئەمانە جێگەی دەگرنەوە.')) {
+                            state.transactions = imported.transactions;
+                            state.purposes = imported.purposes;
+                            state.rate = imported.rate;
+                            sync();
+                            alert('داتاکان بە سەرکەوتوویی هاتنەوە');
+                        }
+                    } else {
+                        alert('فایلەکە ناتەواوە یان هەڵەیە.');
+                    }
+                } catch (err) {
+                    alert('هەڵەیەک ڕوویدا لە خوێندنەوەی فایلەکە.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // EXCEL EXPORT
+        function exportToExcel() {
+            if (currentFiltered.length === 0) return alert('هیچ داتایەک نییە');
+            const wsData = currentFiltered.map(t => ({
+                'بەروار': new Date(t.date).toLocaleDateString('ku-IQ'),
+                'کات': new Date(t.date).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+                'جۆر': t.purpose,
+                'لایەن': t.name,
+                'تێبینی': t.note,
+                'کۆی وەسڵ ($)': t.total,
+                'کاش ($)': t.cash,
+                'قەرز ($)': t.debt,
+                'ڕەسیدی سندوق ($)': t.runningBalance
+            }));
+            const ws = XLSX.utils.json_to_sheet(wsData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Reports");
+            if(!wb.Workbook) wb.Workbook = { Views: [{RTL: true}] };
+            XLSX.writeFile(wb, `Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+
+        // Transaction Logic
+        function saveTransaction() {
+            const name = document.getElementById('f-name').value;
+            const total = parseFloat(document.getElementById('f-total').value) || 0;
+            const cash = parseFloat(document.getElementById('f-cash').value) || 0;
+            const purpose = document.getElementById('f-purpose').value;
+            const curr = document.getElementById('f-curr').value;
+            const note = document.getElementById('f-note').value;
+
+            if(!name || total <= 0) return;
+
+            const purp = state.purposes.find(p => p.name === purpose);
+            const usdTotal = curr === 'USD' ? total : (total / state.rate) * 100;
+            const usdCash = curr === 'USD' ? cash : (cash / state.rate) * 100;
+
+            state.transactions.push({
+                id: Date.now(),
+                date: new Date().toISOString(),
+                name, note, purpose,
+                type: purp ? purp.type : 'in',
+                total: usdTotal, cash: usdCash,
+                debt: Math.max(0, usdTotal - usdCash)
+            });
+            sync();
+            ['f-name', 'f-total', 'f-cash', 'f-note'].forEach(id => document.getElementById(id).value = '');
+        }
+
+        function renderTable() {
+            const body = document.getElementById('table-body');
+            const search = document.getElementById('search-input').value.toLowerCase();
+            const start = document.getElementById('filter-start').value;
+            const end = document.getElementById('filter-end').value;
+
+            let currentVault = 0, tIn = 0, tOut = 0, tDebt = 0;
+            let sorted = [...state.transactions].sort((a,b) => new Date(a.date) - new Date(b.date));
+            
+            currentFiltered = [];
+            const rows = [];
+
+            sorted.forEach(t => {
+                if(t.type === 'in') { currentVault += t.cash; tIn += t.total; }
+                else { currentVault -= t.cash; tOut += t.total; }
+                tDebt += t.debt;
+
+                const day = t.date.split('T')[0];
+                const matchesSearch = t.name.toLowerCase().includes(search) || (t.note && t.note.toLowerCase().includes(search));
+                const matchesDate = (!start || day >= start) && (!end || day <= end);
+
+                if(matchesSearch && matchesDate) {
+                    const finalT = {...t, runningBalance: currentVault};
+                    currentFiltered.push(finalT);
+                    const isIn = t.type === 'in';
+                    rows.push(`
+                        <tr class="group hover:bg-slate-50 transition-all ${isIn ? 'income-row' : 'expense-row'}">
+                            <td class="p-5 text-[10px] font-bold text-slate-400">
+                                <div>${new Date(t.date).toLocaleDateString('ku-IQ')}</div>
+                                <div class="opacity-50">${new Date(t.date).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+                            </td>
+                            <td class="p-5 font-black text-[11px] ${isIn ? 'text-emerald-600' : 'text-rose-600'}">${t.purpose}</td>
+                            <td class="p-5">
+                                <div class="font-black text-slate-700 text-sm">${t.name}</div>
+                                <div class="text-[10px] text-slate-400 italic font-bold">${t.note || ''}</div>
+                            </td>
+                            <td class="p-5 text-center font-bold text-slate-500">${t.total.toLocaleString(undefined, {minimumFractionDigits:2})} $</td>
+                            <td class="p-5 text-center font-black text-indigo-700">${t.cash.toLocaleString(undefined, {minimumFractionDigits:2})} $</td>
+                            <td class="p-5 text-center font-bold text-rose-500">${t.debt > 0 ? t.debt.toLocaleString(undefined, {minimumFractionDigits:2}) + ' $' : '-'}</td>
+                            <td class="p-5 text-center">
+                                <span class="px-3 py-1 bg-slate-900 text-white rounded-lg text-sm font-black italic">${currentVault.toLocaleString(undefined, {minimumFractionDigits:2})}</span>
+                            </td>
+                            <td class="p-5 text-center">
+                                <button onclick="deleteTx(${t.id})" class="text-slate-200 hover:text-rose-600 opacity-0 group-hover:opacity-100"><i class="fas fa-trash-alt"></i></button>
+                            </td>
+                        </tr>
+                    `);
+                }
+            });
+
+            body.innerHTML = rows.reverse().join('');
+            document.getElementById('empty-state').classList.toggle('hidden', rows.length > 0);
+            document.getElementById('dash-cash').innerText = currentVault.toLocaleString(undefined, {maximumFractionDigits:2}) + ' $';
+            document.getElementById('dash-debt').innerText = tDebt.toLocaleString(undefined, {maximumFractionDigits:2}) + ' $';
+            document.getElementById('dash-in').innerText = tIn.toLocaleString(undefined, {maximumFractionDigits:2}) + ' $';
+            document.getElementById('dash-out').innerText = tOut.toLocaleString(undefined, {maximumFractionDigits:2}) + ' $';
+        }
+
+        // Helpers
+        function renderAll() {
+            document.getElementById('f-purpose').innerHTML = state.purposes.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
+            document.getElementById('exchange-rate').value = state.rate;
+            document.getElementById('purposes-list').innerHTML = state.purposes.map(p => `
+                <div class="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border">
+                    <div class="font-black text-sm text-slate-700">${p.name} <span class="text-[10px] font-bold ${p.type === 'in' ? 'text-emerald-500' : 'text-rose-500'}">(${p.type === 'in' ? 'داهات' : 'خەرجی'})</span></div>
+                    <button onclick="deletePurpose(${p.id})" class="text-slate-300 hover:text-rose-500"><i class="fas fa-times"></i></button>
+                </div>
+            `).join('');
+            const names = [...new Set(state.transactions.map(t => t.name))];
+            document.getElementById('cust-list').innerHTML = names.map(n => `<option value="${n}">`).join('');
+            renderTable();
+        }
+
+        function switchTab(t) {
+            ['dashboard', 'reports', 'settings'].forEach(v => {
+                document.getElementById('view-' + v).classList.toggle('hidden', v !== t);
+                document.getElementById('nav-' + v).classList.toggle('tab-active', v === t);
+            });
+        }
+        function deleteTx(id) { if(confirm('بسرێتەوە؟')) { state.transactions = state.transactions.filter(t => t.id !== id); sync(); } }
+        function addPurpose() {
+            const n = document.getElementById('new-purp-name').value.trim();
+            const t = document.getElementById('new-purp-type').value;
+            if(n) { state.purposes.push({id:Date.now(), name:n, type:t}); sync(); document.getElementById('new-purp-name').value=''; }
+        }
+        function deletePurpose(id) { state.purposes = state.purposes.filter(p => p.id !== id); sync(); }
+        function updateRate() { state.rate = parseFloat(document.getElementById('exchange-rate').value) || 150000; sync(); }
+        
+        window.onload = renderAll;
+    </script>
+</body>
+</html>
