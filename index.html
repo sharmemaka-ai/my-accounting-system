@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سیستەمی دارایی v12.7 - وردەکاری سەرمایە</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;900&display=swap');
+        body { font-family: 'Vazirmatn', sans-serif; transition: all 0.3s; scroll-behavior: smooth; }
+        .card-grad { background: linear-gradient(135deg, #4f46e5 0%, #9333ea 100%); }
+        .assets-grad { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); }
+        .profit-grad { background: linear-gradient(135deg, #059669 0%, #10b981 100%); }
+        @media print { 
+            .no-print { display: none !important; }
+            body { background: white !important; padding: 0 !important; }
+            .print-only { display: block !important; }
+        }
+        .print-only { display: none; }
+    </style>
+</head>
+<body class="bg-slate-50 p-4 md:p-8 text-slate-800">
+
+    <div class="max-w-6xl mx-auto no-print">
+        <!-- Navigation -->
+        <div class="flex flex-wrap justify-between items-center mb-8 gap-4">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 card-grad rounded-2xl flex items-center justify-center text-white shadow-lg">
+                    <i class="fas fa-chart-line text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-black">ژمێریاری <span class="text-indigo-600">v12.7</span></h1>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">وردەکاری سەرمایە و قازانج</p>
+                </div>
+            </div>
+
+            <nav class="flex items-center gap-1 bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100 overflow-x-auto">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="px-5 py-2 rounded-xl text-xs font-black bg-indigo-600 text-white shadow-md">سەرەکی</button>
+                <button onclick="switchTab('inventory')" id="nav-inventory" class="px-5 py-2 rounded-xl text-xs font-black text-slate-400">کۆگا</button>
+                <button onclick="switchTab('list')" id="nav-list" class="px-5 py-2 rounded-xl text-xs font-black text-slate-400">مامەڵەکان</button>
+                <button onclick="switchTab('customers')" id="nav-customers" class="px-5 py-2 rounded-xl text-xs font-black text-slate-400">کڕیارەکان</button>
+                <button onclick="switchTab('settings')" id="nav-settings" class="px-5 py-2 rounded-xl text-xs font-black text-slate-400">ڕێکخستن</button>
+            </nav>
+        </div>
+
+        <main>
+            <!-- Dashboard -->
+            <div id="view-dashboard" class="space-y-8">
+                <!-- Advanced Asset Metrics -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="md:col-span-2 assets-grad p-8 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden">
+                        <div class="relative z-10">
+                            <p class="text-[10px] font-bold opacity-60 uppercase mb-1">کۆی سەرمایەی گشتی (Total Assets)</p>
+                            <h2 id="total-assets" class="text-5xl font-black">0 $</h2>
+                            <div class="flex gap-4 mt-4 text-[10px] font-bold opacity-80 border-t border-white/10 pt-4">
+                                <div>کاش: <span id="val-safe">0$</span></div>
+                                <div>کۆگا: <span id="val-inv">0$</span></div>
+                                <div>قەرز: <span id="val-debt">0$</span></div>
+                            </div>
+                        </div>
+                        <i class="fas fa-vault absolute -bottom-4 -left-4 text-white/5 text-9xl"></i>
+                    </div>
+                    
+                    <div class="profit-grad p-8 rounded-[2.5rem] text-white shadow-xl flex flex-col justify-center">
+                        <p class="text-[10px] font-bold opacity-70 uppercase mb-1">قازانجی پاکی مانگ</p>
+                        <h2 id="month-profit" class="text-3xl font-black">0 $</h2>
+                        <p class="text-[9px] mt-2 bg-black/10 p-1 px-2 rounded-lg inline-block self-start">بەپێی تێچووی کۆگا</p>
+                    </div>
+
+                    <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col justify-center">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">کۆی قەرزەکان</p>
+                        <h2 id="total-debt-display" class="text-3xl font-black text-amber-500">0 $</h2>
+                        <p id="total-debt-iqd" class="text-[10px] text-slate-300 mt-1">0 IQD</p>
+                    </div>
+                </div>
+
+                <!-- Fast Record -->
+                <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-md font-black text-slate-800">تۆمارکردنی فرۆشتن</h3>
+                        <div class="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">١٠٠$ = <span id="rate-display">150,000</span> IQD</div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-slate-400 mr-2">ناوی کڕیار</label>
+                            <input type="text" id="f-name" list="cust-list" class="w-full p-4 bg-slate-50 rounded-2xl border-none text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-slate-400 mr-2">هەڵبژاردنی کاڵا</label>
+                            <select id="f-item" onchange="updatePriceFromInv(this.value)" class="w-full p-4 bg-slate-50 rounded-2xl border-none text-sm font-bold outline-none"></select>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-slate-400 mr-2">بڕی فرۆشتن (گشتی)</label>
+                            <input type="number" id="f-total" class="w-full p-4 bg-slate-50 rounded-2xl border-none text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-slate-400 mr-2">بڕی وەرگیراو (کاش)</label>
+                            <input type="number" id="f-cash" class="w-full p-4 bg-slate-50 rounded-2xl border-none text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        
+                        <div class="md:col-span-3 grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <select id="f-curr" class="p-4 bg-slate-50 rounded-2xl border-none text-sm font-bold outline-none">
+                                <option value="USD">دراو: USD ($)</option>
+                                <option value="IQD">دراو: IQD (د.ع)</option>
+                            </select>
+                            <input type="text" id="f-note" placeholder="تێبینی..." class="md:col-span-2 p-4 bg-slate-50 rounded-2xl border-none text-sm font-bold outline-none">
+                        </div>
+                        
+                        <button onclick="saveTx()" class="card-grad text-white rounded-2xl font-black shadow-lg hover:scale-[1.02] transition-transform">تۆمارکردن</button>
+                    </div>
+                    <datalist id="cust-list"></datalist>
+                </div>
+            </div>
+
+            <!-- Inventory View -->
+            <div id="view-inventory" class="hidden space-y-6">
+                <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
+                    <h3 class="font-black mb-6">کۆگای نوێ</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <input type="text" id="inv-name" placeholder="ناوی کاڵا" class="p-4 bg-slate-50 rounded-2xl border-none text-sm font-bold outline-none">
+                        <input type="number" id="inv-cost" placeholder="تێچووی کڕین ($)" class="p-4 bg-slate-50 rounded-2xl border-none text-sm font-bold outline-none">
+                        <input type="number" id="inv-price" placeholder="نرخی فرۆشتن ($)" class="p-4 bg-slate-50 rounded-2xl border-none text-sm font-bold outline-none">
+                        <input type="number" id="inv-qty" placeholder="بڕ (عدد)" class="p-4 bg-slate-50 rounded-2xl border-none text-sm font-bold outline-none">
+                        <button onclick="addInventory()" class="md:col-span-4 p-4 bg-slate-800 text-white rounded-2xl font-black">داخڵکردنی کاڵا</button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="inventory-grid"></div>
+            </div>
+
+            <!-- List -->
+            <div id="view-list" class="hidden space-y-4">
+                <div class="bg-white p-4 rounded-2xl flex gap-4 shadow-sm border border-slate-100">
+                    <input type="text" oninput="app.search = this.value; renderHistory();" placeholder="بگەڕێ لەناو مامەڵەکان..." class="flex-1 p-3 bg-slate-50 rounded-xl border-none text-xs font-bold outline-none">
+                </div>
+                <div id="history-container" class="space-y-2"></div>
+            </div>
+
+            <!-- Customers -->
+            <div id="view-customers" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6" id="customers-grid"></div>
+
+            <!-- Settings -->
+            <div id="view-settings" class="hidden space-y-4">
+                <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                    <h3 class="font-bold mb-4">ڕێکخستنی سیستەم</h3>
+                    <div class="flex items-center gap-4">
+                        <label class="text-sm font-bold">نرخی ئاڵوگۆڕ (100$):</label>
+                        <input type="number" id="exRate" onchange="updateExRate(this.value)" class="p-3 bg-slate-50 rounded-xl border-none font-black text-indigo-600 w-32">
+                    </div>
+                    <div class="flex gap-4 mt-8">
+                        <button onclick="exportData()" class="px-6 py-3 bg-slate-100 rounded-xl text-xs font-black">پاشەکەوتکردنی داتا (Backup)</button>
+                        <button onclick="resetSystem()" class="px-6 py-3 bg-rose-50 text-rose-600 rounded-xl text-xs font-black">پاککردنەوەی گشتی</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const app = {
+            txs: JSON.parse(localStorage.getItem('acc_v12_txs')) || [],
+            inventory: JSON.parse(localStorage.getItem('acc_v12_inv')) || [],
+            rate: parseFloat(localStorage.getItem('acc_v12_rate')) || 150000,
+            search: ''
+        };
+
+        function save() {
+            localStorage.setItem('acc_v12_txs', JSON.stringify(app.txs));
+            localStorage.setItem('acc_v12_inv', JSON.stringify(app.inventory));
+            localStorage.setItem('acc_v12_rate', app.rate);
+            renderAll();
+        }
+
+        function addInventory() {
+            const name = document.getElementById('inv-name').value.trim();
+            const cost = parseFloat(document.getElementById('inv-cost').value) || 0;
+            const price = parseFloat(document.getElementById('inv-price').value) || 0;
+            const qty = parseFloat(document.getElementById('inv-qty').value) || 0;
+            if(!name || qty < 0) return;
+            app.inventory.push({ id: Date.now(), name, cost, price, qty });
+            ['inv-name', 'inv-cost', 'inv-price', 'inv-qty'].forEach(id => document.getElementById(id).value = '');
+            save();
+        }
+
+        function updatePriceFromInv(val) {
+            const item = app.inventory.find(i => i.name === val);
+            if(item) {
+                document.getElementById('f-total').value = item.price;
+                document.getElementById('f-cash').value = item.price;
+            }
+        }
+
+        function saveTx() {
+            const name = document.getElementById('f-name').value.trim();
+            const itemName = document.getElementById('f-item').value;
+            const total = parseFloat(document.getElementById('f-total').value) || 0;
+            const cash = parseFloat(document.getElementById('f-cash').value) || 0;
+            const curr = document.getElementById('f-curr').value;
+            const note = document.getElementById('f-note').value;
+
+            if(!name || total <= 0) return;
+
+            const tUSD = curr === 'USD' ? total : (total / app.rate) * 100;
+            const cUSD = curr === 'USD' ? cash : (cash / app.rate) * 100;
+            
+            let profit = 0;
+            const invItem = app.inventory.find(i => i.name === itemName);
+            if(invItem) {
+                // Profit = Selling Price - Cost Price (scaled to actual total)
+                const costScale = (tUSD / invItem.price) * invItem.cost;
+                profit = tUSD - costScale;
+                invItem.qty -= 1;
+            }
+
+            app.txs.push({
+                id: Date.now(), name, itemName, oTotal: total, oCash: cash, oCurr: curr,
+                tUSD, cUSD, debt: tUSD - cUSD, profit, date: new Date().toISOString()
+            });
+
+            ['f-name', 'f-total', 'f-cash', 'f-note'].forEach(id => document.getElementById(id).value = '');
+            save();
+        }
+
+        function renderAll() {
+            let safeUSD = 0, debtUSD = 0, profitUSD = 0, invUSD = 0;
+            const now = new Date();
+            const customers = {};
+
+            // 1. Calculate Safe (Cash) and Debts from Transactions
+            app.txs.forEach(t => {
+                safeUSD += t.cUSD;
+                debtUSD += t.debt;
+                if(new Date(t.date).getMonth() === now.getMonth()) profitUSD += (t.profit || 0);
+                
+                if(!customers[t.name]) customers[t.name] = { debt: 0, count: 0 };
+                customers[t.name].debt += t.debt;
+                customers[t.name].count++;
+            });
+
+            // 2. Calculate Inventory Value (Based on Cost Price - What you paid)
+            app.inventory.forEach(i => {
+                invUSD += (i.cost * i.qty);
+            });
+
+            // 3. Update Dashboard
+            const totalAssets = safeUSD + debtUSD + invUSD;
+            document.getElementById('total-assets').innerText = totalAssets.toLocaleString(undefined, {maxFractionDigits:0}) + ' $';
+            document.getElementById('val-safe').innerText = safeUSD.toLocaleString(undefined, {maxFractionDigits:0}) + '$';
+            document.getElementById('val-inv').innerText = invUSD.toLocaleString(undefined, {maxFractionDigits:0}) + '$';
+            document.getElementById('val-debt').innerText = debtUSD.toLocaleString(undefined, {maxFractionDigits:0}) + '$';
+            
+            document.getElementById('month-profit').innerText = profitUSD.toLocaleString(undefined, {maxFractionDigits:1}) + ' $';
+            document.getElementById('total-debt-display').innerText = debtUSD.toLocaleString(undefined, {maxFractionDigits:0}) + ' $';
+            document.getElementById('total-debt-iqd').innerText = (debtUSD * app.rate / 100).toLocaleString() + ' IQD';
+            document.getElementById('rate-display').innerText = app.rate.toLocaleString();
+
+            // Populate Item Select
+            document.getElementById('f-item').innerHTML = '<option value="">هەڵبژاردنی کاڵا</option>' + 
+                app.inventory.map(i => `<option value="${i.name}">${i.name} (${i.qty})</option>`).join('');
+
+            // Render Inventory
+            document.getElementById('inventory-grid').innerHTML = app.inventory.map(i => `
+                <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative">
+                    <h4 class="font-black text-slate-800">${i.name}</h4>
+                    <p class="text-[10px] text-slate-400 font-bold mb-4">بڕی ماوە: ${i.qty} دانە</p>
+                    <div class="flex justify-between items-end">
+                        <div class="text-[10px] font-bold">
+                            <div class="text-slate-400">تێچوو: ${i.cost}$</div>
+                            <div class="text-indigo-600 text-sm">فرۆشتن: ${i.price}$</div>
+                        </div>
+                        <button onclick="delInv(${i.id})" class="text-rose-100 hover:text-rose-500 transition-colors"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                </div>
+            `).join('');
+
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const f = app.txs.filter(t => t.name.toLowerCase().includes(app.search.toLowerCase()));
+            document.getElementById('history-container').innerHTML = f.slice().reverse().map(t => `
+                <div class="bg-white p-4 rounded-2xl flex justify-between items-center border border-slate-50 hover:shadow-md transition-all">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center text-[10px]"><i class="fas fa-receipt"></i></div>
+                        <div>
+                            <p class="text-xs font-black">${t.name}</p>
+                            <p class="text-[9px] text-slate-400 font-bold">${new Date(t.date).toLocaleDateString()}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs font-black">${t.oTotal.toLocaleString()} ${t.oCurr}</p>
+                        <p class="text-[9px] font-bold ${t.debt > 0 ? 'text-amber-500' : 'text-emerald-500'}">
+                            ${t.debt > 0 ? 'قەرز: ' + (t.oTotal - t.oCash).toLocaleString() : 'کاش وەرگیراوە'}
+                        </p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function switchTab(t) {
+            document.querySelectorAll('main > div').forEach(v => v.classList.add('hidden'));
+            document.getElementById('view-'+t).classList.remove('hidden');
+            document.querySelectorAll('nav button').forEach(b => b.className = "px-5 py-2 rounded-xl text-xs font-black text-slate-400");
+            document.getElementById('nav-'+t).className = "px-5 py-2 rounded-xl text-xs font-black bg-indigo-600 text-white shadow-md";
+        }
+
+        function delInv(id) { if(confirm('بسڕێتەوە؟')) { app.inventory = app.inventory.filter(i => i.id !== id); save(); } }
+        function updateExRate(v) { app.rate = parseFloat(v) || 150000; save(); }
+        function exportData() {
+            const blob = new Blob([JSON.stringify(app)], {type: 'application/json'});
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download=`backup_${Date.now()}.json`; a.click();
+        }
+        function resetSystem() { if(confirm('دڵنیایت؟ هەموو شتێک دەسڕێتەوە!')) { localStorage.clear(); location.reload(); } }
+
+        document.getElementById('exRate').value = app.rate;
+        renderAll();
+    </script>
+</body>
+</html>
